@@ -3,242 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manager Dashboard - Impress Hotel</title>
+    <title>Impress Hotel - Monthly Statistics Dashboard</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 20px; color: #2c3e50; margin: 0; }
         .container { max-width: 1200px; margin: 0 auto; }
         
-        /* Header */
-        .header-section { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 20px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; border-left: 8px solid #2c3e50; }
-        .header-title h2 { margin: 0; font-size: 24px; color: #2c3e50; letter-spacing: 0.5px; }
-        .header-title p { margin: 5px 0 0 0; color: #7f8c8d; font-size: 14px; }
+        /* Header & Upload Zone */
+        .header-section { text-align: center; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; border-top: 8px solid #2980b9; }
+        .header-section h2 { margin: 0 0 10px 0; color: #2c3e50; font-size: 28px; }
         
-        .date-dropdown { font-size: 16px; padding: 10px 15px; border: 1px solid #bdc3c7; border-radius: 8px; outline: none; cursor: pointer; color: #2c3e50; background-color: #f8f9fa; min-width: 200px; font-weight: bold; }
-        .date-dropdown:focus { border-color: #3498db; }
+        .upload-zone { border: 2px dashed #3498db; background-color: #f0f8ff; padding: 30px; border-radius: 8px; cursor: pointer; transition: background 0.3s; margin-top: 20px; }
+        .upload-zone:hover { background-color: #e1f0fa; }
+        .upload-zone p { font-size: 18px; color: #2980b9; font-weight: bold; margin: 0; }
+        #fileInput { display: none; }
 
-        /* KPI Cards */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .kpi-card { background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: center; position: relative; overflow: hidden; }
-        .kpi-title { font-size: 14px; color: #7f8c8d; text-transform: uppercase; font-weight: bold; margin-bottom: 10px; z-index: 2; }
-        .kpi-value { font-size: 32px; font-weight: 900; color: #2c3e50; z-index: 2; }
+        /* MTD (Month-to-Date) Summary */
+        .section-title { font-size: 20px; font-weight: bold; margin: 30px 0 15px 0; color: #34495e; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px; }
         
-        /* Specific KPI Colors */
-        .kpi-occ .kpi-value { color: #2980b9; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .kpi-card { background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border-left: 5px solid #2ecc71; }
+        .kpi-title { font-size: 14px; color: #7f8c8d; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
+        .kpi-value { font-size: 32px; font-weight: 900; color: #2c3e50; }
+        
+        .kpi-rev { border-color: #27ae60; }
         .kpi-rev .kpi-value { color: #27ae60; }
-        .kpi-adr .kpi-value { color: #8e44ad; }
-        .kpi-sold .kpi-value { color: #d35400; }
+        .kpi-sold { border-color: #e67e22; }
+        .kpi-sold .kpi-value { color: #e67e22; }
+        .kpi-occ { border-color: #3498db; }
+        .kpi-occ .kpi-value { color: #3498db; }
+        .kpi-adr { border-color: #9b59b6; }
+        .kpi-adr .kpi-value { color: #9b59b6; }
 
-        /* Data Table */
-        .table-section { background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
-        .table-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ecf0f1; }
-        th { background-color: #f8f9fa; color: #7f8c8d; font-weight: bold; text-transform: uppercase; font-size: 13px; }
-        tr:hover { background-color: #f1f2f6; }
+        /* Daily Selector */
+        .daily-controls { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); margin-top: 20px; display: flex; align-items: center; gap: 15px; }
+        .date-dropdown { font-size: 18px; padding: 10px 15px; border: 2px solid #34495e; border-radius: 8px; outline: none; cursor: pointer; color: #2c3e50; font-family: inherit; font-weight: bold; }
         
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .badge-green { background: #e8f5e9; color: #2e7d32; }
-        .badge-red { background: #ffebee; color: #c62828; }
-
-        .loading, .error-box { text-align: center; padding: 20px; border-radius: 8px; font-size: 16px; margin-top: 20px; }
-        .loading { color: #666; }
-        .error-box { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; font-weight: bold; }
+        #dashboardContent { display: none; } /* ซ่อนไว้ก่อนจนกว่าจะอัปโหลดไฟล์ */
     </style>
 </head>
 <body>
+
 <div class="container">
     <div class="header-section">
-        <div class="header-title">
-            <h2>🏢 Daily Manager Dashboard</h2>
-            <p>Impress Hotel - ภาพรวมผลประกอบการรายวัน</p>
-        </div>
-        <div>
-            <select id="dateSelector" class="date-dropdown">
-                <option value="">กำลังโหลดข้อมูล...</option>
-            </select>
-        </div>
-    </div>
-    
-    <div class="kpi-grid" id="kpiContainer">
-        <div class="kpi-card kpi-occ"><div class="kpi-title">Occupancy</div><div class="kpi-value">0%</div></div>
-        <div class="kpi-card kpi-rev"><div class="kpi-title">Total Revenue</div><div class="kpi-value">฿0</div></div>
-        <div class="kpi-card kpi-adr"><div class="kpi-title">ADR</div><div class="kpi-value">฿0</div></div>
-        <div class="kpi-card kpi-sold"><div class="kpi-title">Rooms Sold / Total</div><div class="kpi-value">0 / 0</div></div>
+        <h2>📊 Manager Dashboard</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px;">สรุปผลประกอบการรายวัน (Daily Statistics)</p>
+        
+        <label class="upload-zone" id="dropZone">
+            <input type="file" id="fileInput" accept=".csv">
+            <p>📁 คลิกที่นี่เพื่ออัปโหลดไฟล์ Report (.csv) หรือลากไฟล์มาวาง</p>
+            <span id="fileNameDisplay" style="color: #666; font-size: 14px; display: block; margin-top: 10px;"></span>
+        </label>
     </div>
 
-    <div class="table-section">
-        <div class="table-title">Room Type Performance</div>
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>Room Type</th>
-                    <th class="text-center">Total Allotment</th>
-                    <th class="text-center">Sold</th>
-                    <th class="text-center">Available</th>
-                    <th class="text-right">Rate / Night</th>
-                    <th class="text-right">Est. Revenue</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <tr><td colspan="6" class="text-center loading">กำลังประมวลผลข้อมูล...</td></tr>
-            </tbody>
-        </table>
+    <div id="dashboardContent">
+        
+        <div class="section-title">🌟 สรุปยอดรวมสะสมของเดือนนี้ (Month-to-Date)</div>
+        <div class="kpi-grid">
+            <div class="kpi-card kpi-rev">
+                <div class="kpi-title">Total Room Revenue</div>
+                <div class="kpi-value" id="mtdRev">฿0</div>
+            </div>
+            <div class="kpi-card kpi-sold">
+                <div class="kpi-title">Total Nights Sold</div>
+                <div class="kpi-value" id="mtdSold">0</div>
+            </div>
+            <div class="kpi-card kpi-occ">
+                <div class="kpi-title">Average Occ.</div>
+                <div class="kpi-value" id="mtdOcc">0%</div>
+            </div>
+            <div class="kpi-card kpi-adr">
+                <div class="kpi-title">Average ADR</div>
+                <div class="kpi-value" id="mtdAdr">฿0</div>
+            </div>
+        </div>
+
+        <div class="section-title">📅 เจาะลึกข้อมูลรายวัน (Daily Performance)</div>
+        <div class="daily-controls">
+            <label style="font-weight: bold; color: #34495e;">เลือกวันที่:</label>
+            <select id="dateSelector" class="date-dropdown"></select>
+        </div>
+
+        <div class="kpi-grid" style="margin-top: 20px;">
+            <div class="kpi-card kpi-rev">
+                <div class="kpi-title">Daily Room Charges</div>
+                <div class="kpi-value" id="dailyRev">฿0</div>
+            </div>
+            <div class="kpi-card kpi-sold">
+                <div class="kpi-title">Daily Nights Sold</div>
+                <div class="kpi-value" id="dailySold">0</div>
+            </div>
+            <div class="kpi-card kpi-occ">
+                <div class="kpi-title">Daily Occupancy</div>
+                <div class="kpi-value" id="dailyOcc">0%</div>
+            </div>
+            <div class="kpi-card kpi-adr">
+                <div class="kpi-title">Daily RevPAR</div>
+                <div class="kpi-value" id="dailyRevPar">฿0</div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // ลิงก์ใหม่ที่คุณอั้มให้มา
-    const sheetCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRMR7gkj-gQPLCumvpeve9X9ZGgWduVB5BxfaKscL4Vy4XPegunnyBOGp_1X8d7o8MSLYwpLJmEoIJJ/pub?output=csv';
-    
-    // ตั้งค่า Mapping คอลัมน์ (สามารถแก้ตัวเลขตรงนี้ได้เลยถ้าคอลัมน์ไม่ตรง)
-    const COL = {
-        DATE: 0,        // คอลัมน์วันที่
-        ROOM_TYPE: 3,   // คอลัมน์ประเภทห้อง
-        TOTAL_ROOMS: 7, // คอลัมน์จำนวนห้องทั้งหมด (สมมติว่าเป็น Index 7)
-        AVAILABLE: 8,   // คอลัมน์ห้องว่าง (Left)
-        RATE: 11        // คอลัมน์ราคาขาย Final Rate
-    };
+    let reportData = [];
 
-    let hotelData = [];
-
-    function parseCSVRow(text) {
-        let result = [], current = '', inQuotes = false;
-        for (let i = 0; i < text.length; i++) {
-            let char = text[i];
-            if (char === '"') inQuotes = !inQuotes;
-            else if (char === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
-            else current += char;
-        }
-        result.push(current.trim());
-        return result;
-    }
-
+    // ฟังก์ชันจัดการตัวเลขให้มีคอมม่า
     function formatMoney(amount) {
-        return '฿' + amount.toLocaleString('th-TH', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        return '฿' + amount.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
 
-    function renderDashboard(selectedDate) {
-        if (!selectedDate) return;
+    // ฟังก์ชันอ่านไฟล์ CSV เมื่อผู้ใช้อัปโหลด
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        document.getElementById('fileNameDisplay').innerText = `กำลังประมวลผลไฟล์: ${file.name}`;
         
-        const filteredData = hotelData.filter(item => item.date === selectedDate);
-        const tbody = document.getElementById('tableBody');
-        
-        if (filteredData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center error-box">ไม่พบข้อมูลสำหรับวันที่เลือก</td></tr>`;
-            return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const csvText = event.target.result;
+            processData(csvText);
+        };
+        reader.readAsText(file);
+    });
+
+    // ฟังก์ชันกรองขยะออกจากระบบ PMS และจัดเรียงข้อมูล
+    function processData(csvText) {
+        reportData = [];
+        const rows = csvText.split('\n');
+
+        for (let i = 0; i < rows.length; i++) {
+            const line = rows[i].trim();
+            if (line === '') continue;
+
+            // ใช้ regex แยกคอลัมน์แบบรักษารูปแบบ
+            const cols = line.match(/(\s*"[^"]+"\s*|\s*[^,]+|,)(?=,|$)/g);
+            if (!cols) continue;
+            const cleanCols = cols.map(m => m.replace(/^"|"$/g, '').trim()).filter(m => m !== ',');
+
+            // ตรวจสอบว่าบรรทัดนี้คือ "ข้อมูลรายวัน" หรือไม่ 
+            // โดยเช็กว่าคอลัมน์แรกเริ่มต้นด้วยตัวเลข (เช่น "1 Sun", "20 Fri")
+            if (cleanCols.length > 10 && /^\d+/.test(cleanCols[0])) {
+                reportData.push({
+                    date: cleanCols[0],
+                    sold: parseFloat(cleanCols[3]) || 0,
+                    occ: parseFloat(cleanCols[5]) || 0,
+                    adr: parseFloat(cleanCols[6]) || 0,
+                    revPar: parseFloat(cleanCols[7]) || 0,
+                    roomRev: parseFloat(cleanCols[10]) || 0
+                });
+            }
         }
 
-        let totalCapacity = 0;
-        let totalAvailable = 0;
-        let totalSold = 0;
-        let totalRevenue = 0;
-
-        let tableHtml = '';
-
-        filteredData.forEach(room => {
-            // คำนวณข้อมูลระดับแถว
-            let capacity = room.totalRooms || 0; // ถ้าไม่มีข้อมูล Allotment ให้เป็น 0
-            let available = room.available;
+        if (reportData.length > 0) {
+            document.getElementById('dashboardContent').style.display = 'block';
+            document.getElementById('fileNameDisplay').innerText = `อัปเดตข้อมูลล่าสุดเรียบร้อย! (พบข้อมูล ${reportData.length} วัน)`;
             
-            // ป้องกันติดลบ กรณีช่องจำนวนห้องรวมไม่มีข้อมูล
-            let sold = capacity > 0 ? (capacity - available) : 0; 
-            if (sold < 0) sold = 0;
-
-            let rowRevenue = sold * room.rate;
-
-            // สะสมยอดสำหรับ KPI รวม
-            totalCapacity += capacity;
-            totalAvailable += available;
-            totalSold += sold;
-            totalRevenue += rowRevenue;
-
-            // ตกแต่งสถานะห้องว่าง
-            let availBadge = available > 0 ? `<span class="badge badge-green">${available}</span>` : `<span class="badge badge-red">Full</span>`;
-
-            tableHtml += `
-                <tr>
-                    <td><b>${room.type}</b></td>
-                    <td class="text-center">${capacity || '-'}</td>
-                    <td class="text-center">${sold}</td>
-                    <td class="text-center">${availBadge}</td>
-                    <td class="text-right">${room.rate > 0 ? formatMoney(room.rate) : '-'}</td>
-                    <td class="text-right" style="color:#27ae60; font-weight:bold;">${formatMoney(rowRevenue)}</td>
-                </tr>
-            `;
-        });
-
-        tbody.innerHTML = tableHtml;
-
-        // คำนวณและอัปเดต KPI Cards
-        let occupancy = totalCapacity > 0 ? Math.round((totalSold / totalCapacity) * 100) : 0;
-        let adr = totalSold > 0 ? Math.round(totalRevenue / totalSold) : 0;
-
-        document.querySelector('.kpi-occ .kpi-value').innerText = occupancy + '%';
-        document.querySelector('.kpi-rev .kpi-value').innerText = formatMoney(totalRevenue);
-        document.querySelector('.kpi-adr .kpi-value').innerText = formatMoney(adr);
-        document.querySelector('.kpi-sold .kpi-value').innerText = `${totalSold} / ${totalCapacity}`;
+            calculateMTD();
+            setupDailyDropdown();
+        } else {
+            alert('ไม่พบข้อมูลตัวเลขในไฟล์ โปรดตรวจสอบว่าใช่ไฟล์ Report (CSV) ที่ถูกต้องหรือไม่');
+        }
     }
 
-    fetch(sheetCsvUrl)
-        .then(response => {
-            if (!response.ok) throw new Error("ไม่สามารถเชื่อมต่อไฟล์ได้");
-            return response.text();
-        })
-        .then(csvText => {
-            const rows = csvText.split('\n');
-            
-            for (let i = 1; i < rows.length; i++) {
-                if (rows[i].trim() === '') continue;
-                
-                const cols = parseCSVRow(rows[i]);
-                if (cols.length >= Math.max(COL.DATE, COL.ROOM_TYPE, COL.AVAILABLE)) { 
-                    
-                    let rateVal = cols[COL.RATE] ? parseFloat(cols[COL.RATE].replace(/,/g, '')) : 0;
-                    if(isNaN(rateVal)) rateVal = 0;
-
-                    let capVal = cols[COL.TOTAL_ROOMS] ? parseInt(cols[COL.TOTAL_ROOMS].replace(/,/g, '')) : 0;
-                    if(isNaN(capVal)) capVal = 0;
-
-                    let availVal = cols[COL.AVAILABLE] ? parseInt(cols[COL.AVAILABLE].replace(/,/g, '')) : 0;
-                    if(isNaN(availVal)) availVal = 0;
-
-                    hotelData.push({
-                        date: cols[COL.DATE] ? cols[COL.DATE].trim() : '',                          
-                        type: cols[COL.ROOM_TYPE] ? cols[COL.ROOM_TYPE].trim() : 'ไม่ระบุ',       
-                        totalRooms: capVal,
-                        available: availVal,
-                        rate: rateVal
-                    });
-                }
-            }
-            
-            const uniqueDates = [...new Set(hotelData.map(item => item.date))].filter(d => d !== '');
-            const dateSelect = document.getElementById('dateSelector');
-            
-            if (uniqueDates.length > 0) {
-                let optionsHtml = '';
-                uniqueDates.forEach(dateStr => { optionsHtml += `<option value="${dateStr}">${dateStr}</option>`; });
-                dateSelect.innerHTML = optionsHtml;
-                
-                // ดึงข้อมูลวันแรกมาโชว์ก่อน
-                dateSelect.value = uniqueDates[0];
-                renderDashboard(uniqueDates[0]);
-            } else {
-                dateSelect.innerHTML = '<option value="">ไม่พบข้อมูล</option>';
-                document.getElementById('tableBody').innerHTML = `<tr><td colspan="6" class="text-center error-box">ไม่พบข้อมูลในไฟล์ (ชีตอาจจะว่างเปล่า หรือดึงลิงก์ผิดหน้า)</td></tr>`;
-            }
-            
-            dateSelect.addEventListener('change', (e) => {
-                renderDashboard(e.target.value);
-            });
-            
-        })
-        .catch(error => {
-            document.getElementById('tableBody').innerHTML = `<tr><td colspan="6" class="text-center error-box">เกิดข้อผิดพลาด: ${error.message}</td></tr>`;
+    // คำนวณยอดรวมสะสม (Month-to-Date)
+    function calculateMTD() {
+        let totalRev = 0, totalSold = 0, totalOcc = 0;
+        
+        reportData.forEach(day => {
+            totalRev += day.roomRev;
+            totalSold += day.sold;
+            totalOcc += day.occ;
         });
+
+        const avgOcc = (totalOcc / reportData.length).toFixed(2);
+        const avgAdr = totalSold > 0 ? (totalRev / totalSold) : 0;
+
+        document.getElementById('mtdRev').innerText = formatMoney(totalRev);
+        document.getElementById('mtdSold').innerText = totalSold.toLocaleString('th-TH');
+        document.getElementById('mtdOcc').innerText = avgOcc + '%';
+        document.getElementById('mtdAdr').innerText = formatMoney(avgAdr);
+    }
+
+    // สร้างเมนูเลือกดูรายวัน
+    function setupDailyDropdown() {
+        const selector = document.getElementById('dateSelector');
+        selector.innerHTML = '';
+
+        // เรียงลำดับจากวันล่าสุดขึ้นก่อน (เผื่ออยากดูของเมื่อวาน)
+        const reversedData = [...reportData].reverse();
+
+        reversedData.forEach(day => {
+            const option = document.createElement('option');
+            option.value = day.date;
+            option.textContent = day.date;
+            selector.appendChild(option);
+        });
+
+        // แสดงข้อมูลของวันล่าสุดเป็นค่าเริ่มต้น
+        showDailyData(reversedData[0].date);
+
+        selector.addEventListener('change', (e) => {
+            showDailyData(e.target.value);
+        });
+    }
+
+    function showDailyData(selectedDate) {
+        const dayData = reportData.find(d => d.date === selectedDate);
+        if (dayData) {
+            document.getElementById('dailyRev').innerText = formatMoney(dayData.roomRev);
+            document.getElementById('dailySold').innerText = dayData.sold.toLocaleString('th-TH');
+            document.getElementById('dailyOcc').innerText = dayData.occ.toFixed(2) + '%';
+            document.getElementById('dailyRevPar').innerText = formatMoney(dayData.revPar);
+        }
+    }
 </script>
+
 </body>
 </html>
