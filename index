@@ -1,223 +1,402 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impress Hotel - Monthly Statistics Dashboard</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 20px; color: #2c3e50; margin: 0; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        
-        /* Header & Upload Zone */
-        .header-section { text-align: center; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; border-top: 8px solid #2980b9; }
-        .header-section h2 { margin: 0 0 10px 0; color: #2c3e50; font-size: 28px; }
-        
-        .upload-zone { border: 2px dashed #3498db; background-color: #f0f8ff; padding: 30px; border-radius: 8px; cursor: pointer; transition: background 0.3s; margin-top: 20px; }
-        .upload-zone:hover { background-color: #e1f0fa; }
-        .upload-zone p { font-size: 18px; color: #2980b9; font-weight: bold; margin: 0; }
-        #fileInput { display: none; }
-
-        /* MTD (Month-to-Date) Summary */
-        .section-title { font-size: 20px; font-weight: bold; margin: 30px 0 15px 0; color: #34495e; border-bottom: 2px solid #bdc3c7; padding-bottom: 5px; }
-        
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-        .kpi-card { background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border-left: 5px solid #2ecc71; }
-        .kpi-title { font-size: 14px; color: #7f8c8d; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
-        .kpi-value { font-size: 32px; font-weight: 900; color: #2c3e50; }
-        
-        .kpi-rev { border-color: #27ae60; }
-        .kpi-rev .kpi-value { color: #27ae60; }
-        .kpi-sold { border-color: #e67e22; }
-        .kpi-sold .kpi-value { color: #e67e22; }
-        .kpi-occ { border-color: #3498db; }
-        .kpi-occ .kpi-value { color: #3498db; }
-        .kpi-adr { border-color: #9b59b6; }
-        .kpi-adr .kpi-value { color: #9b59b6; }
-
-        /* Daily Selector */
-        .daily-controls { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); margin-top: 20px; display: flex; align-items: center; gap: 15px; }
-        .date-dropdown { font-size: 18px; padding: 10px 15px; border: 2px solid #34495e; border-radius: 8px; outline: none; cursor: pointer; color: #2c3e50; font-family: inherit; font-weight: bold; }
-        
-        #dashboardContent { display: none; } /* ซ่อนไว้ก่อนจนกว่าจะอัปโหลดไฟล์ */
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Impress Hotel — Daily Manager Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--primary:#1B4F72;--primary-mid:#2471A3;--primary-light:#D6EAF8;--accent-light:#EBF5FB;--gold-light:#FEF9E7;--warning:#E67E22;--danger:#C0392B;--success:#1E8449;--bg:#F0F4F8;--card:#FFFFFF;--border:#DDE3EA;--text:#1A202C;--text-muted:#64748B;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Montserrat','Sarabun','Segoe UI',sans-serif;font-size:14px;line-height:1.55;}
+.topbar{background:linear-gradient(135deg,#1B4F72 0%,#2471A3 100%);color:#fff;padding:14px 20px;position:sticky;top:0;z-index:200;box-shadow:0 3px 10px rgba(0,0,0,.2);}
+.topbar-inner{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.hotel-name{font-size:17px;font-weight:700;letter-spacing:.5px;}
+.report-date{font-size:11px;opacity:.75;margin-top:2px;}
+.topbar-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.btn-toggle{display:flex;background:rgba(255,255,255,.15);border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.25);}
+.btn-toggle button{background:transparent;border:none;color:rgba(255,255,255,.85);padding:7px 16px;cursor:pointer;font-size:13px;font-family:inherit;transition:all .2s;white-space:nowrap;}
+.btn-toggle button.active{background:rgba(255,255,255,.25);color:#fff;font-weight:600;}
+.ctrl-select{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:7px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;min-width:150px;}
+.ctrl-select option{background:#1B4F72;color:#fff;}
+.container{max-width:1200px;margin:0 auto;padding:16px;}
+.loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--text-muted);gap:14px;}
+.spinner{width:44px;height:44px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.error-wrap{text-align:center;padding:60px 20px;}
+.error-wrap .icon{font-size:52px;margin-bottom:14px;}
+.error-wrap .msg{font-size:16px;font-weight:600;color:var(--danger);margin-bottom:6px;}
+.error-wrap .hint{font-size:12px;color:var(--text-muted);}
+.card{background:var(--card);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.card-head{background:var(--primary);color:#fff;padding:10px 18px;font-size:12px;font-weight:700;letter-spacing:.6px;display:flex;align-items:center;gap:8px;justify-content:space-between;}
+.card-head .head-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.card-body{padding:16px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:640px){.grid-2{grid-template-columns:1fr;}}
+.budget-top{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+@media(max-width:640px){.budget-top{grid-template-columns:repeat(2,1fr);}}
+.budget-box{background:var(--bg);border-radius:10px;padding:13px;text-align:center;border:1px solid var(--border);}
+.budget-box .b-label{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:5px;}
+.budget-box .b-val{font-size:18px;font-weight:700;color:var(--primary);word-break:break-word;}
+.budget-box .b-sub{font-size:10px;color:var(--text-muted);margin-top:2px;}
+.b-val.is-danger{color:var(--danger);}.b-val.is-success{color:var(--success);}.b-val.is-warn{color:var(--warning);}
+.pace-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.pace-label{font-size:12px;color:var(--text-muted);}
+.badge-status{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-behind{background:#FDEDEC;color:var(--danger);}.badge-ahead{background:#EAFAF1;color:var(--success);}
+.progress-track{background:var(--bg);border-radius:8px;height:8px;overflow:hidden;border:1px solid var(--border);}
+.progress-fill{height:100%;border-radius:8px;transition:width .7s ease;}
+.budget-bottom{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px;background:var(--bg);border-radius:10px;padding:12px;border:1px solid var(--border);}
+@media(max-width:640px){.budget-bottom{grid-template-columns:repeat(2,1fr);}}
+.budget-bottom .bb-label{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;}
+.budget-bottom .bb-val{font-size:17px;font-weight:700;}
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{font-size:10px;font-weight:700;color:var(--text-muted);padding:9px 12px;text-align:right;border-bottom:2px solid var(--border);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
+.tbl th:first-child{text-align:left;}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px;}
+.tbl td:first-child{font-weight:500;}
+.tbl td:not(:first-child){text-align:right;}
+.tbl tbody tr:last-child td{border-bottom:none;}
+.tbl tbody tr:hover{background:var(--bg);}
+.tbl tfoot tr td{background:var(--primary);color:#fff;font-weight:700;border-bottom:none;}
+.tbl tfoot tr td:not(:first-child){text-align:right;}
+.tbl tr.row-hl{background:var(--accent-light);}
+.tbl tr.row-hl td{font-weight:600;}
+.tbl tr.row-total{background:var(--primary);color:#fff;}
+.tbl tr.row-total td{color:#fff;border-bottom:none;}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.ch-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;}
+.ch-direct{background:#EBF5FB;color:#1B4F72;}.ch-ota{background:var(--gold-light);color:#7D6608;}
+.ledger-tbl{width:100%;border-collapse:collapse;}
+.ledger-tbl td{padding:9px 18px;border-bottom:1px solid var(--border);font-size:13px;}
+.ledger-tbl td:last-child{text-align:right;font-weight:600;}
+.ledger-tbl tr:last-child td{border-bottom:none;}
+.ledger-tbl .ledger-closing td{font-weight:700;color:var(--primary);background:var(--primary-light);font-size:14px;}
+.color-green{color:var(--success);}.color-red{color:var(--danger);}
+.chart-wrap{position:relative;height:230px;width:100%;}
+.chart-wrap-sm{position:relative;height:190px;width:100%;}
+.month-charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:640px){.month-charts{grid-template-columns:1fr;}}
+.ov-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+@media(max-width:640px){.ov-grid{grid-template-columns:repeat(2,1fr);}}
+.ov-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.ov-label{font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;}
+.ov-val{font-size:22px;font-weight:700;color:var(--primary);margin:6px 0 2px;}
+.ov-sub{font-size:11px;color:var(--text-muted);}
+.report-footer{text-align:center;padding:12px 0 28px;font-size:11px;color:var(--text-muted);line-height:1.8;}
+.hidden{display:none!important;}
+.fw700{font-weight:700;}
+.color-success{color:var(--success);}.color-danger{color:var(--danger);}.color-warn{color:var(--warning);}.color-primary{color:var(--primary);}.color-muted{color:var(--text-muted);}
+@media(max-width:480px){.hotel-name{font-size:14px;}.topbar{padding:12px 14px;}.container{padding:12px;}.budget-box .b-val{font-size:15px;}.ov-val{font-size:18px;}}
+</style>
 </head>
 <body>
-
-<div class="container">
-    <div class="header-section">
-        <h2>📊 Manager Dashboard</h2>
-        <p style="color: #7f8c8d; margin-bottom: 20px;">สรุปผลประกอบการรายวัน (Daily Statistics)</p>
-        
-        <label class="upload-zone" id="dropZone">
-            <input type="file" id="fileInput" accept=".csv">
-            <p>📁 คลิกที่นี่เพื่ออัปโหลดไฟล์ Report (.csv) หรือลากไฟล์มาวาง</p>
-            <span id="fileNameDisplay" style="color: #666; font-size: 14px; display: block; margin-top: 10px;"></span>
-        </label>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <div class="hotel-name">&#127976; IMPRESS HOTEL HUAI KHWANG</div>
+      <div class="report-date" id="rpt-subtitle">Daily Manager Report</div>
     </div>
-
-    <div id="dashboardContent">
-        
-        <div class="section-title">🌟 สรุปยอดรวมสะสมของเดือนนี้ (Month-to-Date)</div>
-        <div class="kpi-grid">
-            <div class="kpi-card kpi-rev">
-                <div class="kpi-title">Total Room Revenue</div>
-                <div class="kpi-value" id="mtdRev">฿0</div>
-            </div>
-            <div class="kpi-card kpi-sold">
-                <div class="kpi-title">Total Nights Sold</div>
-                <div class="kpi-value" id="mtdSold">0</div>
-            </div>
-            <div class="kpi-card kpi-occ">
-                <div class="kpi-title">Average Occ.</div>
-                <div class="kpi-value" id="mtdOcc">0%</div>
-            </div>
-            <div class="kpi-card kpi-adr">
-                <div class="kpi-title">Average ADR</div>
-                <div class="kpi-value" id="mtdAdr">฿0</div>
-            </div>
-        </div>
-
-        <div class="section-title">📅 เจาะลึกข้อมูลรายวัน (Daily Performance)</div>
-        <div class="daily-controls">
-            <label style="font-weight: bold; color: #34495e;">เลือกวันที่:</label>
-            <select id="dateSelector" class="date-dropdown"></select>
-        </div>
-
-        <div class="kpi-grid" style="margin-top: 20px;">
-            <div class="kpi-card kpi-rev">
-                <div class="kpi-title">Daily Room Charges</div>
-                <div class="kpi-value" id="dailyRev">฿0</div>
-            </div>
-            <div class="kpi-card kpi-sold">
-                <div class="kpi-title">Daily Nights Sold</div>
-                <div class="kpi-value" id="dailySold">0</div>
-            </div>
-            <div class="kpi-card kpi-occ">
-                <div class="kpi-title">Daily Occupancy</div>
-                <div class="kpi-value" id="dailyOcc">0%</div>
-            </div>
-            <div class="kpi-card kpi-adr">
-                <div class="kpi-title">Daily RevPAR</div>
-                <div class="kpi-value" id="dailyRevPar">฿0</div>
-            </div>
-        </div>
+    <div class="topbar-controls">
+      <div class="btn-toggle">
+        <button id="btn-daily" class="active" onclick="switchView('daily')">&#128197; รายวัน</button>
+        <button id="btn-monthly" onclick="switchView('monthly')">&#128202; รายเดือน</button>
+      </div>
+      <select class="ctrl-select" id="sel-day" onchange="renderDay(this.value)"></select>
+      <select class="ctrl-select hidden" id="sel-month" onchange="renderMonth(this.value)"></select>
     </div>
+  </div>
 </div>
-
+<div class="container" id="app">
+  <div class="loading-wrap"><div class="spinner"></div><div>กำลังโหลดข้อมูล...</div></div>
+</div>
 <script>
-    let reportData = [];
+const CFG={
+  CSV_URL:'https://docs.google.com/spreadsheets/d/e/2PACX-1vTgpRLVnXkDO90gT7bN_eKcLbv3ixxsvlSm7yLMyYKdJVeEdHvwd_FAgnkuG3raRYuCwy2oCZ8Hj6z3/pub?gid=1830492076&single=true&output=csv',
+  BUDGET:2000000,
+  START_DATE:new Date(2026,1,11)
+};
+const FIELD_KEYS=["Date","Earned_MR","MTD_Stats","Days_Left","Occ_T","ADR_T","RevPAR_T","Sold_T","Comp_T","Guests_T","ALOS_T","Occ_M","ADR_M","RevPAR_M","Sold_M","Comp_M","Guests_M","ALOS_M","RoomRev_T","ExtraRev_T","RevExTax_T","VAT_T","RevInTax_T","RoomRev_M","ExtraRev_M","RevExTax_M","VAT_M","RevInTax_M","Agoda_BkT","Agoda_NiT","Agoda_RevT","CTrip_BkT","CTrip_NiT","CTrip_RevT","LineOA_BkT","LineOA_NiT","LineOA_RevT","Traveloka_BkT","Traveloka_NiT","Traveloka_RevT","Walkin_BkT","Walkin_NiT","Walkin_RevT","Website_BkT","Website_NiT","Website_RevT","GPCM_BkT","GPCM_NiT","GPCM_RevT","Agoda_BkM","Agoda_ALOSM","Agoda_ADRM","Agoda_RevM","CTrip_BkM","CTrip_ALOSM","CTrip_ADRM","CTrip_RevM","LineOA_BkM","LineOA_ALOSM","LineOA_ADRM","LineOA_RevM","Traveloka_BkM","Traveloka_ALOSM","Traveloka_ADRM","Traveloka_RevM","Walkin_BkM","Walkin_ALOSM","Walkin_ADRM","Walkin_RevM","Website_BkM","Website_ALOSM","Website_ADRM","Website_RevM","GPCM_BkM","GPCM_ALOSM","GPCM_ADRM","GPCM_RevM","ThaiQR_T","ThaiQR_M","BankTr_T","BankTr_M","CC_T","CC_M","WeChat_T","WeChat_M","Xendit_T","Xendit_M","Cash_T","Cash_M","Alipay_T","Alipay_M","CL_Agoda_T","CL_Agoda_M","CL_CTrip_T","CL_CTrip_M","CL_Travel_T","CL_Travel_M","CL_GPCM_T","CL_GPCM_M","Adv_Open","Adv_Col","Adv_Tr","Adv_Cls","GL_Open","GL_Chg","GL_Set","GL_Cls"];
+let ALL_DATA={},DATA_LOADED=false,CHART_INSTS={};
+const THAI_MO=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function pad(n){return String(n).padStart(2,'0');}
+function fmt(v,dec=0){if(v===null||v===undefined||v===''||isNaN(+v))return'—';return(+v).toLocaleString('th-TH',{minimumFractionDigits:dec,maximumFractionDigits:dec});}
+function norm100(v){if(v===null||v===undefined)return null;return+v>1?+v:+v*100;}
+function dateThai(s){const[d,m,y]=s.split('-');return`${+d} ${THAI_MO[+m]} ${+y+543}`;}
+function moThai(k){const[m,y]=k.split('-');return`${THAI_MO[+m]} ${+y+543}`;}
+function setApp(h){document.getElementById('app').innerHTML=h;}
+function destroyCharts(){Object.values(CHART_INSTS).forEach(c=>{try{c.destroy();}catch(e){}});CHART_INSTS={};}
 
-    // ฟังก์ชันจัดการตัวเลขให้มีคอมม่า
-    function formatMoney(amount) {
-        return '฿' + amount.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+// Simple CSV parser — handles quoted fields with commas
+function parseCSV(txt){
+  const rows=[];let r=[],field='',inQ=false;
+  for(let i=0;i<txt.length;i++){
+    const ch=txt[i];
+    if(inQ){if(ch==='"'&&txt[i+1]==='"'){field+='"';i++;}else if(ch==='"'){inQ=false;}else{field+=ch;}}
+    else if(ch==='"'){inQ=true;}
+    else if(ch===','){r.push(field);field='';}
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&txt[i+1]==='\n')i++;r.push(field);rows.push(r);r=[];field='';}
+    else{field+=ch;}
+  }
+  if(field||r.length)r.push(field);
+  if(r.length>1||r[0])rows.push(r);
+  return rows;
+}
+
+async function loadAllData(){
+  if(DATA_LOADED)return true;
+  try{
+    const res=await fetch(CFG.CSV_URL);
+    if(!res.ok)return false;
+    const txt=await res.text();
+    const rows=parseCSV(txt);
+    if(!rows||rows.length<2)return false;
+    // Find key row: the row where col 0 === 'Date'
+    let keyRowIdx=-1,dataStart=3;
+    for(let i=0;i<Math.min(6,rows.length);i++){
+      if(rows[i]&&rows[i][0]==='Date'){keyRowIdx=i;dataStart=i+1;break;}
     }
-
-    // ฟังก์ชันอ่านไฟล์ CSV เมื่อผู้ใช้อัปโหลด
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        document.getElementById('fileNameDisplay').innerText = `กำลังประมวลผลไฟล์: ${file.name}`;
-        
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const csvText = event.target.result;
-            processData(csvText);
-        };
-        reader.readAsText(file);
-    });
-
-    // ฟังก์ชันกรองขยะออกจากระบบ PMS และจัดเรียงข้อมูล
-    function processData(csvText) {
-        reportData = [];
-        const rows = csvText.split('\n');
-
-        for (let i = 0; i < rows.length; i++) {
-            const line = rows[i].trim();
-            if (line === '') continue;
-
-            // ใช้ regex แยกคอลัมน์แบบรักษารูปแบบ
-            const cols = line.match(/(\s*"[^"]+"\s*|\s*[^,]+|,)(?=,|$)/g);
-            if (!cols) continue;
-            const cleanCols = cols.map(m => m.replace(/^"|"$/g, '').trim()).filter(m => m !== ',');
-
-            // ตรวจสอบว่าบรรทัดนี้คือ "ข้อมูลรายวัน" หรือไม่ 
-            // โดยเช็กว่าคอลัมน์แรกเริ่มต้นด้วยตัวเลข (เช่น "1 Sun", "20 Fri")
-            if (cleanCols.length > 10 && /^\d+/.test(cleanCols[0])) {
-                reportData.push({
-                    date: cleanCols[0],
-                    sold: parseFloat(cleanCols[3]) || 0,
-                    occ: parseFloat(cleanCols[5]) || 0,
-                    adr: parseFloat(cleanCols[6]) || 0,
-                    revPar: parseFloat(cleanCols[7]) || 0,
-                    roomRev: parseFloat(cleanCols[10]) || 0
-                });
-            }
-        }
-
-        if (reportData.length > 0) {
-            document.getElementById('dashboardContent').style.display = 'block';
-            document.getElementById('fileNameDisplay').innerText = `อัปเดตข้อมูลล่าสุดเรียบร้อย! (พบข้อมูล ${reportData.length} วัน)`;
-            
-            calculateMTD();
-            setupDailyDropdown();
-        } else {
-            alert('ไม่พบข้อมูลตัวเลขในไฟล์ โปรดตรวจสอบว่าใช่ไฟล์ Report (CSV) ที่ถูกต้องหรือไม่');
-        }
+    if(keyRowIdx<0){FIELD_KEYS.forEach((k,i)=>{});dataStart=3;}
+    // Build colMap from key row
+    const colMap={};
+    if(keyRowIdx>=0){rows[keyRowIdx].forEach((k,ci)=>{if(k)colMap[k.trim()]=ci;});}
+    else{FIELD_KEYS.forEach((k,i)=>{colMap[k]=i;});}
+    // Parse data rows
+    for(let i=dataStart;i<rows.length;i++){
+      const r=rows[i];if(!r||r.length<2)continue;
+      const getV=k=>{
+        const ci=colMap[k];if(ci===undefined||ci===null)return null;
+        const v=(r[ci]||'').trim();return v===''?null:v;
+      };
+      const dateVal=getV('Date');if(!dateVal)continue;
+      const ds=String(dateVal).trim();if(!/^\d{2}-\d{2}-\d{4}$/.test(ds))continue;
+      const rec={};
+      FIELD_KEYS.forEach(k=>{
+        const v=getV(k);
+        if(k==='Date'){rec[k]=v;}
+        else{rec[k]=v!==null&&v!==''&&!isNaN(+v.replace(/,/g,''))?+v.replace(/,/g,''):null;}
+      });
+      ALL_DATA[ds]=rec;
     }
+    DATA_LOADED=true;return Object.keys(ALL_DATA).length>0;
+  }catch(e){console.error('CSV load error:',e);return false;}
+}
 
-    // คำนวณยอดรวมสะสม (Month-to-Date)
-    function calculateMTD() {
-        let totalRev = 0, totalSold = 0, totalOcc = 0;
-        
-        reportData.forEach(day => {
-            totalRev += day.roomRev;
-            totalSold += day.sold;
-            totalOcc += day.occ;
-        });
+function genDates(){const list=[];const today=new Date();let c=new Date(CFG.START_DATE);while(c<=today){list.push(`${pad(c.getDate())}-${pad(c.getMonth()+1)}-${c.getFullYear()}`);c.setDate(c.getDate()+1);}return list.reverse();}
+function genMonths(){const seen=new Set();const today=new Date();let c=new Date(CFG.START_DATE);while(c<=today){seen.add(`${pad(c.getMonth()+1)}-${c.getFullYear()}`);c.setDate(c.getDate()+1);}return[...seen].reverse();}
 
-        const avgOcc = (totalOcc / reportData.length).toFixed(2);
-        const avgAdr = totalSold > 0 ? (totalRev / totalSold) : 0;
+function populateSelectors(){
+  const dates=genDates();const dataKeys=new Set(Object.keys(ALL_DATA));
+  const sd=document.getElementById('sel-day');
+  dates.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=dateThai(d)+(dataKeys.has(d)?'':' —');sd.appendChild(o);});
+  const sm=document.getElementById('sel-month');
+  genMonths().forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=moThai(m);sm.appendChild(o);});
+  const latest=dates.find(d=>dataKeys.has(d));if(latest)sd.value=latest;
+}
 
-        document.getElementById('mtdRev').innerText = formatMoney(totalRev);
-        document.getElementById('mtdSold').innerText = totalSold.toLocaleString('th-TH');
-        document.getElementById('mtdOcc').innerText = avgOcc + '%';
-        document.getElementById('mtdAdr').innerText = formatMoney(avgAdr);
-    }
+let _view='daily';
+function switchView(v){
+  _view=v;
+  document.getElementById('btn-daily').classList.toggle('active',v==='daily');
+  document.getElementById('btn-monthly').classList.toggle('active',v==='monthly');
+  document.getElementById('sel-day').classList.toggle('hidden',v!=='daily');
+  document.getElementById('sel-month').classList.toggle('hidden',v!=='monthly');
+  if(v==='daily')renderDay(document.getElementById('sel-day').value);
+  else renderMonth(document.getElementById('sel-month').value);
+}
 
-    // สร้างเมนูเลือกดูรายวัน
-    function setupDailyDropdown() {
-        const selector = document.getElementById('dateSelector');
-        selector.innerHTML = '';
+function renderDay(dateStr){
+  if(!dateStr)return;destroyCharts();
+  document.getElementById('rpt-subtitle').textContent=`Daily Manager Report — ${dateThai(dateStr)}`;
+  const d=ALL_DATA[dateStr];
+  if(!d){setApp(`<div class="error-wrap"><div class="icon">📭</div><div class="msg">ยังไม่มีข้อมูล ${dateThai(dateStr)}</div><div class="hint">วางข้อมูลที่ Claude ส่งให้ลงใน Google Sheet แล้วรีเฟรชหน้านี้</div></div>`);return;}
+  const g=k=>d[k]!==null&&d[k]!==undefined?+d[k]:null;
+  const budget=CFG.BUDGET;
+  const earned=g('Earned_MR'),mtdStats=g('MTD_Stats'),daysLeft=g('Days_Left');
+  const paceRaw=mtdStats!==null?(mtdStats/budget*100):null;
+  const budgetPro=daysLeft!==null?(budget/30*(30-daysLeft)):null;
+  const forecast=earned!==null&&daysLeft!==null?(earned/(30-daysLeft)*30):null;
+  const earnedVsBudget=earned!==null&&budgetPro!==null?(earned-budgetPro):null;
+  const isBehind=paceRaw!==null&&paceRaw<100;
+  const paceW=paceRaw!==null?Math.min(Math.max(paceRaw,0),100):0;
+  const paceClr=isBehind?'#C0392B':'#1E8449';
+  const occ_t=norm100(g('Occ_T')),occ_m=norm100(g('Occ_M'));
+  const oc=v=>v===null?'':(v>=80?'color-success':v>=60?'color-primary':'color-warn');
+  const CH=['Agoda','CTrip','LineOA','Traveloka','Walkin','Website','GPCM'];
+  const CHL={'Agoda':'Agoda','CTrip':'CTrip','LineOA':'Line OA','Traveloka':'Traveloka','Walkin':'Walk-in','Website':'Hotel Website','GPCM':'จีพีซีเอ็ม กรุ๊ป'};
+  const totRevT=CH.reduce((s,c)=>s+(g(`${c}_RevT`)||0),0);
+  const totRevM=CH.reduce((s,c)=>s+(g(`${c}_RevM`)||0),0);
+  const totBkT=CH.reduce((s,c)=>s+(g(`${c}_BkT`)||0),0);
+  const totNiT=CH.reduce((s,c)=>s+(g(`${c}_NiT`)||0),0);
+  const totBkM=CH.reduce((s,c)=>s+(g(`${c}_BkM`)||0),0);
+  const directRevT=['LineOA','Walkin','Website'].reduce((s,c)=>s+(g(`${c}_RevT`)||0),0);
+  const otaRevT=['Agoda','CTrip','Traveloka','GPCM'].reduce((s,c)=>s+(g(`${c}_RevT`)||0),0);
+  const directPct=totRevT>0?(directRevT/totRevT*100):null;
+  const otaPct=totRevT>0?(otaRevT/totRevT*100):null;
+  const PAY=['ThaiQR','BankTr','CC','WeChat','Xendit','Cash','Alipay'];
+  const PAYL={'ThaiQR':'Thai QR','BankTr':'Bank Transfer','CC':'Credit Card','WeChat':'WeChat Pay','Xendit':'Xendit','Cash':'Cash','Alipay':'Alipay'};
+  const totPayT=PAY.reduce((s,p)=>s+(g(`${p}_T`)||0),0);
+  const totPayM=PAY.reduce((s,p)=>s+(g(`${p}_M`)||0),0);
+  const CL=['Agoda','CTrip','Travel','GPCM'];
+  const CLL={'Agoda':'Agoda','CTrip':'CTrip','Travel':'Traveloka','GPCM':'จีพีซีเอ็ม กรุ๊ป'};
+  const totCLT=CL.reduce((s,c)=>s+(g(`CL_${c}_T`)||0),0);
+  const totCLM=CL.reduce((s,c)=>s+(g(`CL_${c}_M`)||0),0);
 
-        // เรียงลำดับจากวันล่าสุดขึ้นก่อน (เผื่ออยากดูของเมื่อวาน)
-        const reversedData = [...reportData].reverse();
+  setApp(`
+  <div class="card">
+    <div class="card-head">🎯 BUDGET TRACKER <span style="font-size:11px;opacity:.75">เป้า: ${fmt(budget)} THB/เดือน</span></div>
+    <div class="card-body">
+      <div class="budget-top">
+        <div class="budget-box"><div class="b-label">Earned (Mgr.Report)</div><div class="b-val color-primary">${fmt(earned,2)}</div><div class="b-sub">THB</div></div>
+        <div class="budget-box"><div class="b-label">Budget Pro-rated</div><div class="b-val color-muted">${fmt(budgetPro,2)}</div><div class="b-sub">THB</div></div>
+        <div class="budget-box"><div class="b-label">Earned vs Budget</div><div class="b-val ${(earnedVsBudget||0)>=0?'is-success':'is-danger'}">${earnedVsBudget!==null?(earnedVsBudget>=0?'+':'')+fmt(earnedVsBudget,2):'—'}</div><div class="b-sub">THB</div></div>
+        <div class="budget-box"><div class="b-label">Forecast (Run Rate)</div><div class="b-val is-warn">${fmt(forecast,2)}</div><div class="b-sub">THB</div></div>
+      </div>
+      <div class="pace-row"><span class="pace-label">ความคืบหน้า MTD vs เป้าหมาย</span><span class="badge-status ${isBehind?'badge-behind':'badge-ahead'}">${isBehind?'⚠️ BEHIND PACE':'✅ AHEAD'}&nbsp;${paceRaw!==null?fmt(paceRaw,2)+'%':'—'}</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${paceW}%;background:${paceClr}"></div></div>
+      <div class="budget-bottom">
+        <div><div class="bb-label">📦 MTD (Monthly Stats)</div><div class="bb-val color-primary">${fmt(mtdStats,2)}</div><div style="font-size:10px;color:var(--text-muted)">THB</div></div>
+        <div><div class="bb-label">🎯 ต้องหาเพิ่ม</div><div class="bb-val is-warn">${mtdStats!==null?fmt(budget-mtdStats,2):'—'}</div><div style="font-size:10px;color:var(--text-muted)">THB</div></div>
+        <div><div class="bb-label">📅 วันที่เหลือ</div><div class="bb-val">${daysLeft!==null?fmt(daysLeft,0):'—'}</div><div style="font-size:10px;color:var(--text-muted)">วัน</div></div>
+        <div><div class="bb-label">MTD vs เป้า</div><div class="bb-val ${(paceRaw||0)>=100?'is-success':'is-danger'}">${paceRaw!==null?fmt(paceRaw,2)+'%':'—'}</div><div style="font-size:10px;color:var(--text-muted)">ของ ${fmt(budget)} THB</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head">📊 ROOM OPERATIONS</div>
+      <table class="tbl"><thead><tr><th></th><th>TODAY</th><th>MTD</th></tr></thead><tbody>
+        <tr><td>Occupancy %</td><td class="fw700 ${oc(occ_t)}">${occ_t!==null?fmt(occ_t,2)+'%':'—'}</td><td>${occ_m!==null?fmt(occ_m,2)+'%':'—'}</td></tr>
+        <tr><td>ADR (THB)</td><td class="fw700">${fmt(g('ADR_T'),2)}</td><td>${fmt(g('ADR_M'),2)}</td></tr>
+        <tr><td>RevPAR (THB)</td><td class="fw700">${fmt(g('RevPAR_T'),2)}</td><td>${fmt(g('RevPAR_M'),2)}</td></tr>
+        <tr><td>Rooms Sold</td><td class="fw700">${fmt(g('Sold_T'))}</td><td>${fmt(g('Sold_M'))}</td></tr>
+        <tr><td>Complimentary</td><td>${fmt(g('Comp_T'))}</td><td>${fmt(g('Comp_M'))}</td></tr>
+        <tr><td>Guests</td><td class="fw700">${fmt(g('Guests_T'))}</td><td>${fmt(g('Guests_M'))}</td></tr>
+        <tr><td>ALOS (คืน)</td><td>${g('ALOS_T')!==null?fmt(g('ALOS_T'),2):'—'}</td><td>${g('ALOS_M')!==null?fmt(g('ALOS_M'),2):'—'}</td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-head">💰 REVENUE (excl. VAT)</div>
+      <table class="tbl"><thead><tr><th></th><th>TODAY</th><th>MTD</th><th>Budget</th></tr></thead><tbody>
+        <tr><td>Room Revenue</td><td class="fw700">${fmt(g('RoomRev_T'),2)}</td><td>${fmt(g('RoomRev_M'),2)}</td><td class="color-muted">—</td></tr>
+        <tr><td>Extra Revenue</td><td class="fw700">${fmt(g('ExtraRev_T'),2)}</td><td>${fmt(g('ExtraRev_M'),2)}</td><td class="color-muted">—</td></tr>
+        <tr class="row-hl"><td><b>Rev excl. Tax</b></td><td class="fw700">${fmt(g('RevExTax_T'),2)}</td><td class="fw700">${fmt(g('RevExTax_M'),2)}</td><td class="fw700 color-primary">${fmt(budget,2)}</td></tr>
+        <tr><td>VAT</td><td>${fmt(g('VAT_T'),2)}</td><td>${fmt(g('VAT_M'),2)}</td><td class="color-muted">—</td></tr>
+        <tr class="row-total"><td>Rev incl. Tax</td><td>${fmt(g('RevInTax_T'),2)}</td><td>${fmt(g('RevInTax_M'),2)}</td><td>—</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">📡 BOOKING CHANNEL MIX<div class="head-right"><span class="ch-badge ch-direct">Direct ${directPct!==null?fmt(directPct,2)+'%':'—'}</span><span class="ch-badge ch-ota">OTA ${otaPct!==null?fmt(otaPct,2)+'%':'—'}</span></div></div>
+    <div class="tbl-scroll"><table class="tbl" style="min-width:600px">
+      <thead><tr><th>Channel</th><th>Bookings</th><th>Nights</th><th>Revenue (TODAY)</th><th>Bk MTD</th><th>ALOS</th><th>ADR</th><th>Revenue MTD</th></tr></thead>
+      <tbody>${CH.map(c=>`<tr><td>${CHL[c]}</td><td>${fmt(g(`${c}_BkT`))}</td><td>${fmt(g(`${c}_NiT`))}</td><td class="fw700">${fmt(g(`${c}_RevT`),2)}</td><td>${fmt(g(`${c}_BkM`))}</td><td>${g(`${c}_ALOSM`)!==null?fmt(g(`${c}_ALOSM`),2):'—'}</td><td>${g(`${c}_ADRM`)!==null?fmt(g(`${c}_ADRM`),2):'—'}</td><td class="fw700">${fmt(g(`${c}_RevM`),2)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>TOTAL</td><td>${fmt(totBkT)}</td><td>${fmt(totNiT)}</td><td>${fmt(totRevT,2)}</td><td>${fmt(totBkM)}</td><td>—</td><td>—</td><td>${fmt(totRevM,2)}</td></tr></tfoot>
+    </table></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head">💳 PAYMENT CHANNELS</div>
+      <table class="tbl"><thead><tr><th>Channel</th><th>TODAY</th><th>MTD</th><th>Share%</th></tr></thead>
+      <tbody>${PAY.map(p=>{const share=totPayM>0&&g(`${p}_M`)!==null?(g(`${p}_M`)/totPayM*100):null;return`<tr><td>${PAYL[p]}</td><td>${fmt(g(`${p}_T`),2)}</td><td>${fmt(g(`${p}_M`),2)}</td><td class="color-muted">${share!==null?fmt(share,1)+'%':'—'}</td></tr>`;}).join('')}</tbody>
+      <tfoot><tr><td>TOTAL</td><td>${fmt(totPayT,2)}</td><td>${fmt(totPayM,2)}</td><td>100%</td></tr></tfoot>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-head">🏢 CITY LEDGER — OTA ค้างชำระ</div>
+      <table class="tbl"><thead><tr><th>OTA</th><th>TODAY</th><th>MTD</th></tr></thead>
+      <tbody>${CL.map(c=>`<tr><td>${CLL[c]}</td><td>${fmt(g(`CL_${c}_T`),2)}</td><td class="fw700">${fmt(g(`CL_${c}_M`),2)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>TOTAL</td><td>${fmt(totCLT,2)}</td><td>${fmt(totCLM,2)}</td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head">📋 ADVANCE DEPOSIT</div>
+      <table class="ledger-tbl">
+        <tr><td>Opening</td><td>${fmt(g('Adv_Open'),2)}</td></tr>
+        <tr><td>Collected</td><td class="color-green">${fmt(g('Adv_Col'),2)}</td></tr>
+        <tr><td>Transfer to Guest</td><td class="color-red">${fmt(g('Adv_Tr'),2)}</td></tr>
+        <tr class="ledger-closing"><td>Closing Balance</td><td>${fmt(g('Adv_Cls'),2)}</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-head">📋 GUEST LEDGER</div>
+      <table class="ledger-tbl">
+        <tr><td>Opening</td><td>${fmt(g('GL_Open'),2)}</td></tr>
+        <tr><td>Charges Posted</td><td class="color-green">${fmt(g('GL_Chg'),2)}</td></tr>
+        <tr><td>Settlement</td><td class="color-red">${fmt(g('GL_Set'),2)}</td></tr>
+        <tr class="ledger-closing"><td>Closing Balance</td><td>${fmt(g('GL_Cls'),2)}</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="card"><div class="card-head">📈 Channel Mix — Revenue TODAY</div><div class="card-body"><div style="max-width:300px;margin:0 auto"><canvas id="pie-today" height="260"></canvas></div></div></div>
+  <div class="report-footer">📋 Reports: ① Manager Report &nbsp;② Monthly Statistics &nbsp;③ City Ledger Detail &nbsp;④ Source-wise Revenue Summary (Daily+MTD)<br>Printed by Sumeth | Budget: 2,000,000 THB/mo (excl. VAT) | eZee Absolute PMS | ${dateThai(dateStr)}</div>`);
 
-        reversedData.forEach(day => {
-            const option = document.createElement('option');
-            option.value = day.date;
-            option.textContent = day.date;
-            selector.appendChild(option);
-        });
+  setTimeout(()=>{
+    const ctx=document.getElementById('pie-today');if(!ctx)return;
+    const colors=['#1B4F72','#2471A3','#1ABC9C','#E67E22','#8E44AD','#27AE60','#E74C3C'];
+    CHART_INSTS['pie']=new Chart(ctx,{type:'doughnut',data:{labels:CH.map(c=>CHL[c]),datasets:[{data:CH.map(c=>g(`${c}_RevT`)||0),backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11,family:'Sarabun'},padding:8}},tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw,0)} THB`}}}}});
+  },120);
+}
 
-        // แสดงข้อมูลของวันล่าสุดเป็นค่าเริ่มต้น
-        showDailyData(reversedData[0].date);
+function renderMonth(moKey){
+  if(!moKey)return;destroyCharts();
+  document.getElementById('rpt-subtitle').textContent=`Monthly Summary — ${moThai(moKey)}`;
+  const[mo,yr]=moKey.split('-');
+  const moData=Object.entries(ALL_DATA).filter(([d])=>{const[,m,y]=d.split('-');return m===mo&&y===yr;}).sort(([a],[b])=>a<b?-1:1);
+  if(!moData.length){setApp(`<div class="error-wrap"><div class="icon">📭</div><div class="msg">ยังไม่มีข้อมูลเดือน ${moThai(moKey)}</div></div>`);return;}
+  const labels=[],occArr=[],revArr=[],soldArr=[],adrArr=[];
+  moData.forEach(([date,d])=>{
+    const[dy,mm]=date.split('-');labels.push(`${+dy}/${+mm}`);
+    const g=k=>d[k]!==null&&d[k]!==undefined?+d[k]:null;
+    occArr.push(norm100(g('Occ_T'))||0);revArr.push(g('RevInTax_T')||0);soldArr.push(g('Sold_T')||0);adrArr.push(g('ADR_T')||0);
+  });
+  const[,ld]=moData[moData.length-1];const g=k=>ld[k]!==null&&ld[k]!==undefined?+ld[k]:null;
+  const mtdOcc=norm100(g('Occ_M'));
+  setApp(`
+  <div class="ov-grid">
+    <div class="ov-card"><div class="ov-label">MTD Revenue (incl. VAT)</div><div class="ov-val">${fmt(g('RevInTax_M'),0)}</div><div class="ov-sub">THB</div></div>
+    <div class="ov-card"><div class="ov-label">MTD Occupancy เฉลี่ย</div><div class="ov-val">${mtdOcc!==null?fmt(mtdOcc,1)+'%':'—'}</div><div class="ov-sub">${moData.length} วัน</div></div>
+    <div class="ov-card"><div class="ov-label">MTD ADR</div><div class="ov-val">${fmt(g('ADR_M'),0)}</div><div class="ov-sub">THB</div></div>
+    <div class="ov-card"><div class="ov-label">Rooms Sold (MTD)</div><div class="ov-val">${fmt(g('Sold_M'),0)}</div><div class="ov-sub">ห้อง</div></div>
+  </div>
+  <div class="month-charts">
+    <div class="card"><div class="card-head">📈 Occupancy % รายวัน</div><div class="card-body"><div class="chart-wrap-sm"><canvas id="ch-occ"></canvas></div></div></div>
+    <div class="card"><div class="card-head">💰 Revenue รายวัน (incl. VAT)</div><div class="card-body"><div class="chart-wrap-sm"><canvas id="ch-rev"></canvas></div></div></div>
+    <div class="card"><div class="card-head">🛏️ Rooms Sold รายวัน</div><div class="card-body"><div class="chart-wrap-sm"><canvas id="ch-sold"></canvas></div></div></div>
+    <div class="card"><div class="card-head">💲 ADR รายวัน (THB)</div><div class="card-body"><div class="chart-wrap-sm"><canvas id="ch-adr"></canvas></div></div></div>
+  </div>
+  <div class="card">
+    <div class="card-head">📋 สรุปรายวัน — ${moThai(moKey)}</div>
+    <div class="tbl-scroll"><table class="tbl" style="min-width:460px">
+      <thead><tr><th>วันที่</th><th>Occ%</th><th>Rooms Sold</th><th>ADR (THB)</th><th>Revenue incl. VAT</th></tr></thead>
+      <tbody>${moData.map(([date,d])=>{const gd=k=>d[k]!==null&&d[k]!==undefined?+d[k]:null;const occ=norm100(gd('Occ_T'));const[dy,mm]=date.split('-');const oc=v=>v===null?'':(v>=80?'color-success':v>=60?'color-primary':'color-warn');return`<tr><td>${+dy}/${+mm}</td><td class="${oc(occ)}">${occ!==null?fmt(occ,1)+'%':'—'}</td><td>${fmt(gd('Sold_T'))}</td><td>${fmt(gd('ADR_T'),0)}</td><td class="fw700">${fmt(gd('RevInTax_T'),0)}</td></tr>`;}).join('')}</tbody>
+      <tfoot><tr><td>MTD (${moData.length} วัน)</td><td>${mtdOcc!==null?fmt(mtdOcc,1)+'%':'—'}</td><td>${fmt(g('Sold_M'),0)}</td><td>${fmt(g('ADR_M'),0)}</td><td>${fmt(g('RevInTax_M'),0)}</td></tr></tfoot>
+    </table></div>
+  </div>
+  <div class="report-footer">Impress Hotel Huai Khwang | ${moThai(moKey)} | eZee Absolute PMS | ${moData.length} วันที่มีข้อมูล</div>`);
 
-        selector.addEventListener('change', (e) => {
-            showDailyData(e.target.value);
-        });
-    }
+  setTimeout(()=>{
+    const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},maxRotation:45}},y:{beginAtZero:false,ticks:{font:{size:10}}}}};
+    CHART_INSTS['occ']=new Chart(document.getElementById('ch-occ'),{type:'line',data:{labels,datasets:[{data:occArr,borderColor:'#1B4F72',backgroundColor:'rgba(27,79,114,.1)',borderWidth:2,fill:true,tension:.3,pointRadius:3}]},options:{...base,plugins:{...base.plugins,tooltip:{callbacks:{label:c=>` ${fmt(c.raw,1)}%`}}}}});
+    CHART_INSTS['rev']=new Chart(document.getElementById('ch-rev'),{type:'bar',data:{labels,datasets:[{data:revArr,backgroundColor:'rgba(26,188,156,.75)',borderColor:'#1ABC9C',borderWidth:1}]},options:{...base,plugins:{...base.plugins,tooltip:{callbacks:{label:c=>` ${fmt(c.raw,0)} THB`}}}}});
+    CHART_INSTS['sold']=new Chart(document.getElementById('ch-sold'),{type:'bar',data:{labels,datasets:[{data:soldArr,backgroundColor:'rgba(36,113,163,.75)',borderColor:'#2471A3',borderWidth:1}]},options:{...base,plugins:{...base.plugins,tooltip:{callbacks:{label:c=>` ${fmt(c.raw,0)} RM`}}}}});
+    CHART_INSTS['adr']=new Chart(document.getElementById('ch-adr'),{type:'line',data:{labels,datasets:[{data:adrArr,borderColor:'#E67E22',backgroundColor:'rgba(230,126,34,.1)',borderWidth:2,fill:true,tension:.3,pointRadius:3}]},options:{...base,plugins:{...base.plugins,tooltip:{callbacks:{label:c=>` ${fmt(c.raw,0)} THB`}}}}});
+  },120);
+}
 
-    function showDailyData(selectedDate) {
-        const dayData = reportData.find(d => d.date === selectedDate);
-        if (dayData) {
-            document.getElementById('dailyRev').innerText = formatMoney(dayData.roomRev);
-            document.getElementById('dailySold').innerText = dayData.sold.toLocaleString('th-TH');
-            document.getElementById('dailyOcc').innerText = dayData.occ.toFixed(2) + '%';
-            document.getElementById('dailyRevPar').innerText = formatMoney(dayData.revPar);
-        }
-    }
+(async function init(){
+  setApp(`<div class="loading-wrap"><div class="spinner"></div><div>กำลังโหลดข้อมูลจาก Google Sheet...</div></div>`);
+  const ok=await loadAllData();
+  if(!ok){setApp(`<div class="error-wrap"><div class="icon">⚠️</div><div class="msg">ไม่สามารถโหลดข้อมูลได้</div><div class="hint">ตรวจสอบ Google Sheet Share Setting และ SHEET_ID</div><div style="margin-top:16px;font-size:12px;background:#f8f9fa;padding:12px;border-radius:8px;text-align:left;max-width:500px;margin:16px auto 0"><b>CSV_URL ที่ใช้:</b><br><code style='font-size:10px;word-break:break-all'>${CFG.CSV_URL}</code></div></div>`);return;}
+  populateSelectors();
+  const latest=Object.keys(ALL_DATA).sort().reverse()[0];
+  if(latest)renderDay(latest);
+})();
 </script>
-
 </body>
 </html>
