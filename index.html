@@ -177,7 +177,7 @@ async function loadAllData(){
       FIELD_KEYS.forEach(k=>{
         const v=getV(k);
         if(k==='Date'){rec[k]=v;}
-        else{rec[k]=v!==null&&v!==''&&!isNaN(+v.replace(/,/g,''))?+v.replace(/,/g,''):null;}
+        else{const n=v!==null?v.replace(/,/g,'').replace(/%$/,''):v;rec[k]=v!==null&&v!==''&&!isNaN(+n)?+n:null;}
       });
       ALL_DATA[ds]=rec;
     }
