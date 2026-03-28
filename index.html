@@ -185,6 +185,7 @@ async function loadAllData(){
   }catch(e){console.error('CSV load error:',e);return false;}
 }
 
+function dateOrd(s){const[d,m,y]=s.split('-');return+y*10000+(+m)*100+(+d);}
 function genDates(){const list=[];const today=new Date();let c=new Date(CFG.START_DATE);while(c<=today){list.push(`${pad(c.getDate())}-${pad(c.getMonth()+1)}-${c.getFullYear()}`);c.setDate(c.getDate()+1);}return list.reverse();}
 function genMonths(){const seen=new Set();const today=new Date();let c=new Date(CFG.START_DATE);while(c<=today){seen.add(`${pad(c.getMonth()+1)}-${c.getFullYear()}`);c.setDate(c.getDate()+1);}return[...seen].reverse();}
 
@@ -347,7 +348,7 @@ function renderMonth(moKey){
   if(!moKey)return;destroyCharts();
   document.getElementById('rpt-subtitle').textContent=`Monthly Summary — ${moThai(moKey)}`;
   const[mo,yr]=moKey.split('-');
-  const moData=Object.entries(ALL_DATA).filter(([d])=>{const[,m,y]=d.split('-');return m===mo&&y===yr;}).sort(([a],[b])=>a<b?-1:1);
+  const moData=Object.entries(ALL_DATA).filter(([d])=>{const[,m,y]=d.split('-');return m===mo&&y===yr;}).sort(([a],[b])=>dateOrd(a)-dateOrd(b));
   if(!moData.length){setApp(`<div class="error-wrap"><div class="icon">📭</div><div class="msg">ยังไม่มีข้อมูลเดือน ${moThai(moKey)}</div></div>`);return;}
   const labels=[],occArr=[],revArr=[],soldArr=[],adrArr=[];
   moData.forEach(([date,d])=>{
@@ -394,7 +395,7 @@ function renderMonth(moKey){
   const ok=await loadAllData();
   if(!ok){setApp(`<div class="error-wrap"><div class="icon">⚠️</div><div class="msg">ไม่สามารถโหลดข้อมูลได้</div><div class="hint">ตรวจสอบ Google Sheet Share Setting และ SHEET_ID</div><div style="margin-top:16px;font-size:12px;background:#f8f9fa;padding:12px;border-radius:8px;text-align:left;max-width:500px;margin:16px auto 0"><b>CSV_URL ที่ใช้:</b><br><code style='font-size:10px;word-break:break-all'>${CFG.CSV_URL}</code></div></div>`);return;}
   populateSelectors();
-  const latest=Object.keys(ALL_DATA).sort().reverse()[0];
+  const latest=Object.keys(ALL_DATA).sort((a,b)=>dateOrd(b)-dateOrd(a))[0];
   if(latest)renderDay(latest);
 })();
 </script>
